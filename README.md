@@ -15,3 +15,8 @@ Add the following to your `build.gradle.kts`:
 dependencies {
     implementation("llc.virtue:kopairwise:0.0.1")
 }
+```
+
+## License
+
+This software includes the work that is distributed in the Apache License 2.0.
