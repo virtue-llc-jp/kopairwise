@@ -5,39 +5,48 @@ package llc.virtue.kopairwise
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class PairwiseTest {
     enum class OS { Windows, MacOS, Linux }
     enum class Browser { Chrome, Firefox, Safari }
     enum class Locale { en_US, ja_JP, fr_FR }
 
-    val factors = listOf(
+    private val factors = listOf(
         Factor(OS::class),
         Factor(Browser::class),
         Factor(Locale::class)
     )
 
-    val constraints = listOf(
+    private val constraints = listOf(
         "OS" eq OS.Windows implies ("Browser" inSet listOf(Browser.Chrome, Browser.Firefox)),
+        "OS" eq OS.Linux implies ("Browser" inSet listOf(Browser.Chrome, Browser.Firefox)),
         "Locale" neq Locale.fr_FR and ("Browser" notInSet listOf(Browser.Safari))
     )
 
-    @Test fun testInitializeUncoveredPairs() {
-        val result = initializeUncoveredPairs(factors)
+    @Test
+    fun testInitializeUncoveredPairs() {
+        val result = initializeUncoveredPairs(factors, listOf())
         assertEquals(3, result.size, "$result")
         for ((factorPair, levelPairs) in result) {
             assertEquals(9, levelPairs.size, "$levelPairs")
         }
     }
 
-    @Test fun testNoConstraints() {
+    @Test
+    fun testNoConstraints() {
         val result = generatePairwise(factors, listOf())
         assertEquals(19, result.size, "$result")
-        println(result)
     }
 
-    @Test fun testSimple() {
+    @Test
+    fun testSimple() {
         val result = generatePairwise(factors, constraints)
         assertEquals(10, result.size, "$result")
+        for (testCase in result) {
+            constraints.map {
+                assertTrue("$testCase is not compliant.") { it(testCase) }
+            }
+        }
     }
 }

@@ -9,7 +9,7 @@ fun generatePairwise(
 ): List<Map<String, Enum<*>>> {
     if (factors.isEmpty()) return emptyList()
 
-    val uncoveredPairs = initializeUncoveredPairs(factors)
+    val uncoveredPairs = initializeUncoveredPairs(factors, constraints)
     val combinations = mutableListOf<Map<String, Enum<*>>>()
     combination(factors) { testCase ->
         if (constraints.all { it(testCase) }) {
@@ -22,7 +22,10 @@ fun generatePairwise(
     return combinations
 }
 
-fun removeCoveredPairs(uncoveredPairs: MutableMap<FactorPair, MutableSet<LevelPair>>, testCase: Map<String, Enum<*>>): Boolean {
+fun removeCoveredPairs(
+    uncoveredPairs: MutableMap<FactorPair, MutableSet<LevelPair>>,
+    testCase: Map<String, Enum<*>>
+): Boolean {
     val removeElements = mutableListOf<Pair<FactorPair, LevelPair>>()
     for ((factorPair, levelPairs) in uncoveredPairs) {
         val l1 = testCase[factorPair.factor1.name]
@@ -63,7 +66,7 @@ fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) -> Boolean
         var carry = true
         for (i in factors.indices.reversed()) {
             if (carry) {
-                indices[i] ++
+                indices[i]++
                 carry = false
             }
             if (indices[i] == factors[i].levels.size) {
@@ -78,7 +81,10 @@ fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) -> Boolean
 }
 
 // 未カバーのペアを初期化する関数
-fun initializeUncoveredPairs(factors: List<Factor>): MutableMap<FactorPair, MutableSet<LevelPair>> {
+fun initializeUncoveredPairs(
+    factors: List<Factor>,
+    constraints: List<Constraint>
+): MutableMap<FactorPair, MutableSet<LevelPair>> {
     val uncoveredPairs = mutableMapOf<FactorPair, MutableSet<LevelPair>>()
 
     for (i in factors.indices) {
@@ -88,13 +94,15 @@ fun initializeUncoveredPairs(factors: List<Factor>): MutableMap<FactorPair, Muta
 
             for (level1 in factors[i].levels) {
                 for (level2 in factors[j].levels) {
-                    pairSet.add(LevelPair(level1, level2))
+                    val testCase = mapOf(factors[i].name to level1, factors[j].name to level2)
+                    if (constraints.all { it(testCase) }) {
+                        pairSet.add(LevelPair(level1, level2))
+                    }
                 }
             }
             uncoveredPairs[factorPair] = pairSet
         }
     }
-
     return uncoveredPairs
 }
 

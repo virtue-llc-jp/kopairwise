@@ -19,13 +19,13 @@ class Constraint(
 }
 
 infix fun String.eq(value: Enum<*>): Constraint =
-    Constraint { combination -> combination[this] == value }
+    Constraint { combination -> if (combination.containsKey(this)) combination[this] == value else true}
 
 infix fun String.neq(value: Enum<*>): Constraint =
-    Constraint { combination -> combination[this] != value }
+    Constraint { combination -> if (combination.containsKey(this)) combination[this] != value else true}
 
 infix fun String.inSet(values: List<Enum<*>>): Constraint =
-    Constraint { combination -> combination[this] in values }
+    Constraint { combination -> if (combination.containsKey(this)) combination[this] in values else true}
 
 infix fun String.notInSet(values: List<Enum<*>>): Constraint =
-    Constraint { combination -> combination[this] !in values }
+    Constraint { combination -> if (combination.containsKey(this)) combination[this] !in values else true}
