@@ -11,45 +11,72 @@ fun generatePairwise(
 
     val uncoveredPairs = initializeUncoveredPairs(factors, constraints)
     val combinations = mutableListOf<Map<String, Enum<*>>>()
-    combination(factors) { testCase ->
-        if (constraints.all { it(testCase) }) {
-            if (removeCoveredPairs(uncoveredPairs, testCase)) {
-                combinations.add(testCase)
+    val allCases = mutableListOf<Map<String, Enum<*>>>()
+    combination(factors) { allCases.add(it) }
+    while (true) {
+        var candidateCase: Map<String, Enum<*>>? = null
+        var maxCoverage = listOf<Pair<FactorPair, LevelPair>>()
+        var foundAt = -1
+        for ((i, testCase) in allCases.withIndex()) {
+            if (constraints.all { it(testCase) }) {
+                val coverage = searchCoverage(uncoveredPairs, testCase)
+                if (coverage.size > maxCoverage.size) {
+                    candidateCase = testCase
+                    maxCoverage = coverage
+                    foundAt = i
+                }
             }
         }
-        uncoveredPairs.isNotEmpty()
+        if (foundAt == -1) {
+            // Failed to increase coverage
+            break
+        }
+        combinations.add(candidateCase!!)
+        removeCoverage(maxCoverage, uncoveredPairs)
+        allCases.removeAt(foundAt)
+        if (uncoveredPairs.isEmpty()) {
+            // Successfully covered
+            break
+        }
     }
+
     return combinations
 }
 
-fun removeCoveredPairs(
+private fun removeCoverage(
+    maxCoverage: List<Pair<FactorPair, LevelPair>>,
+    uncoveredPairs: MutableMap<FactorPair, MutableSet<LevelPair>>
+) {
+    maxCoverage.forEach { r ->
+        uncoveredPairs[r.first]?.remove(r.second)
+        if (uncoveredPairs[r.first]?.isEmpty() == true) {
+            uncoveredPairs.remove(r.first)
+        }
+    }
+}
+
+/**
+ * Search testCase with the most coverage and remove covered pairs from uncoveredPairs.
+ */
+private fun searchCoverage(
     uncoveredPairs: MutableMap<FactorPair, MutableSet<LevelPair>>,
     testCase: Map<String, Enum<*>>
-): Boolean {
-    val removeElements = mutableListOf<Pair<FactorPair, LevelPair>>()
+): List<Pair<FactorPair, LevelPair>> {
+    val coverage = mutableListOf<Pair<FactorPair, LevelPair>>()
     for ((factorPair, levelPairs) in uncoveredPairs) {
         val l1 = testCase[factorPair.factor1.name]
         val l2 = testCase[factorPair.factor2.name]
         for (level in levelPairs) {
             val (level1, level2) = level
             if (l1 == level1 && l2 == level2) {
-                removeElements.add(factorPair to level)
+                coverage.add(factorPair to level)
             }
         }
     }
-    if (removeElements.isEmpty()) {
-        return false
-    }
-    removeElements.forEach { r ->
-        uncoveredPairs[r.first]?.remove(r.second)
-        if (uncoveredPairs[r.first]?.isEmpty() == true) {
-            uncoveredPairs.remove(r.first)
-        }
-    }
-    return true
+    return coverage
 }
 
-fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) -> Boolean) {
+private fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) -> Unit) {
     if (factors.isEmpty()) {
         return
     }
@@ -58,9 +85,7 @@ fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) -> Boolean
 
     while (true) {
         val current = factors.indices.associate { i -> factors[i].name to factors[i].levels[indices[i]] }
-        if (!action(current)) {
-            break
-        }
+        action(current)
 
         // carry
         var carry = true

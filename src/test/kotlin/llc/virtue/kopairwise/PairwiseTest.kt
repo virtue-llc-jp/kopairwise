@@ -36,13 +36,13 @@ class PairwiseTest {
     @Test
     fun testNoConstraints() {
         val result = generatePairwise(factors, listOf())
-        assertEquals(19, result.size, "$result")
+        assertEquals(10, result.size, "$result")
     }
 
     @Test
     fun testSimple() {
         val result = generatePairwise(factors, constraints)
-        assertEquals(10, result.size, "$result")
+        assertEquals(6, result.size, "$result")
         for (testCase in result) {
             constraints.map {
                 assertTrue("$testCase is not compliant.") { it(testCase) }
