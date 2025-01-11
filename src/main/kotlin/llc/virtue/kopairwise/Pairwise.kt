@@ -5,7 +5,8 @@ package llc.virtue.kopairwise
  */
 fun generatePairwise(
     factors: List<Factor>,
-    constraints: List<Constraint> = emptyList()
+    constraints: List<Constraint> = emptyList(),
+    invert: Boolean = false,
 ): List<Map<String, Enum<*>>> {
     // no factor, no test
     if (factors.isEmpty()) return emptyList()
@@ -19,7 +20,7 @@ fun generatePairwise(
     }
 
     val coverageLimit = getCoverageLimit(factors)
-    val uncoveredPairs = initializeUncoveredPairs(factors, constraints)
+    val uncoveredPairs = initializeUncoveredPairs(factors, constraints, invert)
     val combinations = mutableListOf<Map<String, Enum<*>>>()
     val allCases = mutableListOf<Map<String, Enum<*>>>()
     combination(factors) { allCases.add(it) }
@@ -28,7 +29,7 @@ fun generatePairwise(
         var maxCoverage = listOf<Pair<FactorPair, LevelPair>>()
         var foundAt = -1
         for ((i, testCase) in allCases.withIndex()) {
-            if (constraints.all { it(testCase) }) {
+            if (constraints.all { it(testCase) } != invert) {
                 val coverage = searchCoveredPairs(uncoveredPairs, testCase)
                 if (coverage.size > maxCoverage.size) {
                     candidateCase = testCase
@@ -130,7 +131,8 @@ private fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) ->
 
 fun initializeUncoveredPairs(
     factors: List<Factor>,
-    constraints: List<Constraint>
+    constraints: List<Constraint>,
+    invert: Boolean = false,
 ): MutableMap<FactorPair, MutableSet<LevelPair>> {
     val uncoveredPairs = mutableMapOf<FactorPair, MutableSet<LevelPair>>()
 
@@ -142,7 +144,7 @@ fun initializeUncoveredPairs(
             for (level1 in factors[i].levels) {
                 for (level2 in factors[j].levels) {
                     val testCase = mapOf(factors[i].name to level1, factors[j].name to level2)
-                    if (constraints.all { it(testCase) }) {
+                    if (constraints.all { it(testCase) } != invert) {
                         pairSet.add(LevelPair(level1, level2))
                     }
                 }
