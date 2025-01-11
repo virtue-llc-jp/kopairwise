@@ -19,9 +19,9 @@ class PairwiseTest {
     )
 
     private val constraints = listOf(
-        "OS" eq OS.Windows implies ("Browser" inSet listOf(Browser.Chrome, Browser.Firefox)),
-        "OS" eq OS.Linux implies ("Browser" inSet listOf(Browser.Chrome, Browser.Firefox)),
-        "Locale" neq Locale.fr_FR and ("Browser" notInSet listOf(Browser.Safari))
+        "OS" eq OS.Windows implies ("browser" inSet listOf(Browser.Chrome, Browser.Firefox)),
+        "OS" eq OS.Linux implies ("browser" inSet listOf(Browser.Chrome, Browser.Firefox)),
+        "locale" neq Locale.fr_FR and ("browser" notInSet listOf(Browser.Safari))
     )
 
     @Test

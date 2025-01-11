@@ -1,9 +1,78 @@
 package llc.virtue.kopairwise
 
+import kotlin.reflect.KClass
+import kotlin.reflect.full.callSuspend
+import kotlin.reflect.full.memberProperties
+
+open class Pairwise(builder: PairwiseBuilder.() -> Unit) {
+    private val factors: List<Factor>
+    private val constraints: List<Constraint>
+
+    init {
+        val pairwiseBuilder = PairwiseBuilder().apply(builder)
+        factors = pairwiseBuilder.factors
+        constraints = pairwiseBuilder.constraints
+    }
+
+    fun cases(): List<Map<String, Enum<*>>> {
+        return generatePairwise(factors, constraints)
+    }
+
+    fun invertCases(): List<Map<String, Enum<*>>> {
+        return generatePairwise(factors, constraints, invert = true)
+    }
+
+    fun <T : Any> cases(kClass: KClass<T>): List<T> {
+        return typing(kClass, cases())
+    }
+
+    fun <T : Any> invertCases(kClass: KClass<T>): List<T> {
+        return typing(kClass, invertCases())
+    }
+
+    private fun <T : Any> typing(kClass: KClass<T>, cases: List<Map<String, Enum<*>>>): List<T> {
+        return cases.map { case ->
+            // find constructor
+            println(kClass.constructors)
+            val constructor = kClass.constructors.find { constructor ->
+                case.keys.all { factorName ->
+                    factorName in constructor.parameters.map { it.name }
+                }
+            } ?: throw IllegalArgumentException("Constructor not found for $kClass")
+            // create args
+            val args = constructor.parameters.associateWith { param ->
+                case[param.name]
+            }
+            constructor.callBy(args)
+        }
+    }
+}
+
+class PairwiseBuilder(
+    internal val factors: MutableList<Factor> = mutableListOf(),
+    internal val constraints: MutableList<Constraint> = mutableListOf()
+) {
+    fun factor(enumClass: KClass<out Enum<*>>) {
+        factors.add(Factor(enumClass))
+    }
+
+    fun factors(vararg enumClasses: KClass<out Enum<*>>) {
+        factors.addAll(enumClasses.map { Factor(it) })
+    }
+
+    fun constraint(constraint: Constraint) {
+        constraints.add(constraint)
+    }
+
+    fun constraints(vararg constraints: Constraint) {
+        this.constraints.addAll(constraints)
+    }
+}
+
 /**
  * Generate cases using Pairwise method.
  */
-fun generatePairwise(
+internal fun generatePairwise(
     factors: List<Factor>,
     constraints: List<Constraint> = emptyList(),
     invert: Boolean = false,
@@ -57,7 +126,7 @@ fun generatePairwise(
     return combinations
 }
 
-fun getCoverageLimit(factors: List<Factor>): Int {
+private fun getCoverageLimit(factors: List<Factor>): Int {
     return factors.size.let { size ->
         if (size == 1) {
             1
@@ -129,7 +198,7 @@ private fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) ->
     }
 }
 
-fun initializeUncoveredPairs(
+internal fun initializeUncoveredPairs(
     factors: List<Factor>,
     constraints: List<Constraint>,
     invert: Boolean = false,
