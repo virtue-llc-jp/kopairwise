@@ -1,9 +1,12 @@
 package llc.virtue.kopairwise
 
 import kotlin.reflect.KClass
-import kotlin.reflect.full.callSuspend
-import kotlin.reflect.full.memberProperties
 
+/**
+ * Pairwise test case generator.
+ *
+ * @param builder PairwiseBuilder
+ */
 open class Pairwise(builder: PairwiseBuilder.() -> Unit) {
     private val factors: List<Factor>
     private val constraints: List<Constraint>

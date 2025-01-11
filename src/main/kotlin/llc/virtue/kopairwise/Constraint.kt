@@ -1,5 +1,10 @@
 package llc.virtue.kopairwise
 
+/**
+ * Constraint is a function that takes a combination of attributes and returns a boolean.
+ * It is used to represent a constraint on the attributes of a set.
+ * @param condition A function that takes a combination of attributes and returns a boolean.
+ */
 class Constraint(
     private val condition: (Map<String, Enum<*>>) -> Boolean
 ) {

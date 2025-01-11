@@ -5,6 +5,9 @@ plugins {
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
 
+    // can use kotest
+    id("io.kotest") version "0.4.11"
+
     // for publishing to maven central
     `maven-publish`
     signing
