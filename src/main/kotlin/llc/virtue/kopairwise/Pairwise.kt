@@ -7,8 +7,18 @@ fun generatePairwise(
     factors: List<Factor>,
     constraints: List<Constraint> = emptyList()
 ): List<Map<String, Enum<*>>> {
+    // no factor, no test
     if (factors.isEmpty()) return emptyList()
+    // single factor
+    if (factors.size == 1) {
+        return factors.first().let { factor ->
+            factor.levels.map {
+                mapOf(factors.first().name to it)
+            }
+        }
+    }
 
+    val coverageLimit = getCoverageLimit(factors)
     val uncoveredPairs = initializeUncoveredPairs(factors, constraints)
     val combinations = mutableListOf<Map<String, Enum<*>>>()
     val allCases = mutableListOf<Map<String, Enum<*>>>()
@@ -19,20 +29,23 @@ fun generatePairwise(
         var foundAt = -1
         for ((i, testCase) in allCases.withIndex()) {
             if (constraints.all { it(testCase) }) {
-                val coverage = searchCoverage(uncoveredPairs, testCase)
+                val coverage = searchCoveredPairs(uncoveredPairs, testCase)
                 if (coverage.size > maxCoverage.size) {
                     candidateCase = testCase
                     maxCoverage = coverage
                     foundAt = i
+                    if (coverage.size >= coverageLimit) {
+                        break
+                    }
                 }
             }
         }
-        if (foundAt == -1) {
+        if (candidateCase == null) {
             // Failed to increase coverage
             break
         }
-        combinations.add(candidateCase!!)
-        removeCoverage(maxCoverage, uncoveredPairs)
+        combinations.add(candidateCase)
+        removeCoveredPairs(maxCoverage, uncoveredPairs)
         allCases.removeAt(foundAt)
         if (uncoveredPairs.isEmpty()) {
             // Successfully covered
@@ -43,7 +56,17 @@ fun generatePairwise(
     return combinations
 }
 
-private fun removeCoverage(
+fun getCoverageLimit(factors: List<Factor>): Int {
+    return factors.size.let { size ->
+        if (size == 1) {
+            1
+        } else {
+            (size * (size - 1)) / 2
+        }
+    }
+}
+
+private fun removeCoveredPairs(
     maxCoverage: List<Pair<FactorPair, LevelPair>>,
     uncoveredPairs: MutableMap<FactorPair, MutableSet<LevelPair>>
 ) {
@@ -58,7 +81,7 @@ private fun removeCoverage(
 /**
  * Search testCase with the most coverage and remove covered pairs from uncoveredPairs.
  */
-private fun searchCoverage(
+private fun searchCoveredPairs(
     uncoveredPairs: MutableMap<FactorPair, MutableSet<LevelPair>>,
     testCase: Map<String, Enum<*>>
 ): List<Pair<FactorPair, LevelPair>> {
@@ -105,7 +128,6 @@ private fun combination(factors: List<Factor>, action: (Map<String, Enum<*>>) ->
     }
 }
 
-// 未カバーのペアを初期化する関数
 fun initializeUncoveredPairs(
     factors: List<Factor>,
     constraints: List<Constraint>
@@ -131,8 +153,6 @@ fun initializeUncoveredPairs(
     return uncoveredPairs
 }
 
-// 因子間のペアを表すクラス
 data class FactorPair(val factor1: Factor, val factor2: Factor)
 
-// 因子の水準間のペアを表すクラス
 data class LevelPair(val level1: Enum<*>, val level2: Enum<*>)
