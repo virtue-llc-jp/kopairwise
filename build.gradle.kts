@@ -23,6 +23,8 @@ repositories {
 }
 
 dependencies {
+    implementation(kotlin("reflect"))
+
     // Use the Kotlin JUnit 5 integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 
@@ -36,13 +38,6 @@ dependencies {
     testImplementation(libs.kotest.property)
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api(libs.commons.math3)
-
-    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation(libs.guava)
-    implementation(kotlin("reflect"))
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -96,26 +91,20 @@ signing {
 }
 
 tasks.named<cl.franciscosolis.sonatypecentralupload.SonatypeCentralUploadTask>("sonatypeCentralUpload") {
-    // 公開するファイルを生成するタスクに依存する。
-    dependsOn("jar", "sourcesJar", "javadocJar", "generatePomFileForMavenPublication")
+    dependsOn("jar", "sourcesJar", "javadocJar", "generatePomFileForMavenJavaPublication")
 
-    // Central Portalで生成したトークンを指定する。
     username = System.getenv("SONATYPE_CENTRAL_USERNAME")
     password = System.getenv("SONATYPE_CENTRAL_PASSWORD")
 
-    // タスク名から成果物を取得する。
     archives = files(
         tasks.named("jar"),
         tasks.named("sourcesJar"),
         tasks.named("javadocJar"),
     )
-    // POMファイルをタスクの成果物から取得する。
     pom = file(
-        tasks.named("generatePomFileForMavenPublication").get().outputs.files.single()
+        tasks.named("generatePomFileForMavenJavaPublication").get().outputs.files.single()
     )
 
-    // PGPの秘密鍵を指定する。
     signingKey = System.getenv("PGP_SIGNING_KEY")
-    // PGPの秘密鍵のパスフレーズを指定する。
     signingKeyPassphrase = System.getenv("PGP_SIGNING_KEY_PASSPHRASE")
 }
