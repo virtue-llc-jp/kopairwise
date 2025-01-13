@@ -13,7 +13,7 @@ Add the following to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("llc.virtue:kopairwise:0.0.1")
+    implementation("llc.virtue:kopairwise:0.0.2")
 }
 ```
 
