@@ -57,7 +57,7 @@ tasks.named<Test>("test") {
 
 // publishing to maven central
 mavenPublishing {
-    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
     signAllPublications()
 
     coordinates(group.toString(), name, version.toString())
@@ -91,7 +91,7 @@ mavenPublishing {
     configure(
         KotlinJvm(
 //            javadocJar = JavadocJar.Dokka("dokkaHtml"),
-            javadocJar = JavadocJar.Empty(),
+            javadocJar = JavadocJar.None(),
             sourcesJar = true,
         )
     )
