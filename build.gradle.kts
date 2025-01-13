@@ -1,3 +1,6 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
     alias(libs.plugins.kotlin.jvm)
@@ -9,9 +12,7 @@ plugins {
     id("io.kotest") version "0.4.11"
 
     // for publishing to maven central
-    `maven-publish`
-    signing
-    id("cl.franciscosolis.sonatype-central-upload") version "1.0.3"
+    id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
 group = "llc.virtue"
@@ -55,56 +56,43 @@ tasks.named<Test>("test") {
 }
 
 // publishing to maven central
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            pom {
-                name.set("kopairwise")
-                description.set("A Kotlin library for pairwise combination generation.")
-                url.set("https://github.com/virtue-llc-jp/kopairwise")
-                licenses {
-                    license {
-                        name.set("Apache License 2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("virtue-llc-jp")
-                        name.set("VIRTUE LLC Japan")
-                        email.set("info@virtue.llc")
-                    }
-                }
-                scm {
-                    connection.set("scm:git:git://github.com/virtue-llc-jp/kopairwise.git")
-                    developerConnection.set("scm:git:ssh://github.com/virtue-llc-jp/kopairwise.git")
-                    url.set("https://github.com/virtue-llc-jp/kopairwise")
-                }
+mavenPublishing {
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
+
+    coordinates(group.toString(), name, version.toString())
+
+    pom {
+        name.set(project.name)
+        description.set("A Kotlin library for pairwise combination generation.")
+        inceptionYear.set("2025")
+        url.set("https://github.com/virtue-llc-jp/kopairwise")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
             }
         }
+        developers {
+            developer {
+                id.set("virtue-llc-jp")
+                name.set("VIRTUE LLC Japan")
+                url.set("info@virtue.llc")
+            }
+        }
+        scm {
+            url.set("https://github.com/virtue-llc-jp/kopairwise")
+            connection.set("scm:git:git://github.com/virtue-llc-jp/kopairwise.git")
+            developerConnection.set("scm:git:ssh://github.com/virtue-llc-jp/kopairwise.git")
+        }
     }
-}
 
-signing {
-    sign(publishing.publications["mavenJava"])
-}
-
-tasks.named<cl.franciscosolis.sonatypecentralupload.SonatypeCentralUploadTask>("sonatypeCentralUpload") {
-    dependsOn("jar", "sourcesJar", "javadocJar", "generatePomFileForMavenJavaPublication")
-
-    username = System.getenv("SONATYPE_CENTRAL_USERNAME")
-    password = System.getenv("SONATYPE_CENTRAL_PASSWORD")
-
-    archives = files(
-        tasks.named("jar"),
-        tasks.named("sourcesJar"),
-        tasks.named("javadocJar"),
+    configure(
+        KotlinJvm(
+//            javadocJar = JavadocJar.Dokka("dokkaHtml"),
+            javadocJar = JavadocJar.Empty(),
+            sourcesJar = true,
+        )
     )
-    pom = file(
-        tasks.named("generatePomFileForMavenJavaPublication").get().outputs.files.single()
-    )
-
-    signingKey = System.getenv("PGP_SIGNING_KEY")
-    signingKeyPassphrase = System.getenv("PGP_SIGNING_KEY_PASSPHRASE")
 }

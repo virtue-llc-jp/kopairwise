@@ -1,16 +1,16 @@
 #!/bin/bash
 
-export SONATYPE_CENTRAL_USERNAME='virtue-llc-jp'
-export PGP_SIGNING_KEY=$(gpg --armor --export-secret-keys info@virtue.llc)
+export ORG_GRADLE_PROJECT_mavenCentralUsername='virtue-llc-jp'
+export ORG_GRADLE_PROJECT_signingInMemoryKey="$(gpg --export-secret-keys --armor info@virtue.llc | grep -v '\-\-' | grep -v '^=.' | tr -d '\n')"
 
 echo -n "SonarType Central Password: "
-read -s SONATYPE_CENTRAL_PASSWORD
+read -s ORG_GRADLE_PROJECT_mavenCentralPassword
 echo
-export SONATYPE_CENTRAL_PASSWORD
+export ORG_GRADLE_PROJECT_mavenCentralPassword
 
 echo -n "PGP signing key PassPhrase: "
-read -s PGP_SIGNING_KEY_PASSPHRASE
+read -s ORG_GRADLE_PROJECT_signingInMemoryKeyPassword
 echo
-export PGP_SIGNING_KEY_PASSPHRASE
+export ORG_GRADLE_PROJECT_signingInMemoryKeyPassword
 
-./gradlew sonatypeCentralUpload
+./gradlew publishAllPublicationsToMavenCentralRepository
